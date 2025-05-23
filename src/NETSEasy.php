@@ -10,7 +10,7 @@ class NETSEasy
 {
     public static function makeNetsEasyPaymentFromPaymentDTO(Payment $paymentDTO): NetsEasyPayment
     {
-        return NetsEasyPayment::new()
+        return NetsEasyPayment::make()
             ->setPaymentDTO($paymentDTO);
     }
 
@@ -19,7 +19,7 @@ class NETSEasy
      */
     public static function makeNetsEasyPaymentFromPaymentId(string $paymentId): ?NetsEasyPayment
     {
-        return NetsEasyPayment::new()
+        return NetsEasyPayment::make()
             ->setPaymentId($paymentId);
     }
 }

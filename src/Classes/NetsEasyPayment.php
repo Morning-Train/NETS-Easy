@@ -23,7 +23,7 @@ class NetsEasyPayment
         private readonly NetsEasyClient $netsEasyClient
     ) {}
 
-    public static function new(): self
+    public static function make(): self
     {
         return app(NetsEasyPayment::class);
     }
