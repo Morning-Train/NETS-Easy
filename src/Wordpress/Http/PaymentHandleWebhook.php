@@ -7,9 +7,7 @@ use Morningtrain\NETSEasy\Model\PaymentReference;
 
 class PaymentHandleWebhook implements \Morningtrain\NETSEasy\Contracts\PaymentHandleWebhook
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     public function url(string $event = '{event}'): string
     {

@@ -43,9 +43,9 @@ class NetsEasyPayment
 
         if (! empty($language)) {
             if (str_contains($url, '?')) {
-                $url .= '&language=' . $language;
+                $url .= '&language='.$language;
             } else {
-                $url .= '?language=' . $language;
+                $url .= '?language='.$language;
             }
         }
 
