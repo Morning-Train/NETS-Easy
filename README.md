@@ -1,19 +1,27 @@
-# This is my package nets-easy
+# Nets Easy for MorningMedley & Laravel
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/morningtrain/nets-easy.svg?style=flat-square)](https://packagist.org/packages/morningtrain/nets-easy)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/morningtrain/nets-easy/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/morningtrain/nets-easy/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/morningtrain/nets-easy/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/morningtrain/nets-easy/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/morningtrain/nets-easy.svg?style=flat-square)](https://packagist.org/packages/morningtrain/nets-easy)
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Setup your .env file](#setup-your-env-file)
+  - [Running migrations](#running-migrations)
+  - [Create payment](#create-payment)
+  - [Handle existing payment](#handle-existing-payment)
+    - [Get Payment](#get-payment)
+    - [Create payment](#create-payment-1)
+    - [Terminate payment](#terminate-payment)
+    - [Cancel payment](#cancel-payment)
+    - [Charge payment](#charge-payment)
+  - [Handle webhooks](#handle-webhooks)
+    - [List of implemented webhooks](#list-of-implemented-webhooks)
+    - [Actions](#actions)
+-  [Testing](#testing)
+- [Credits](#credits)
+- [License](#license)
 
 This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
-
-## Support us
-
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/NETS-Easy.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/NETS-Easy)
-
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
-
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
 
 ## Installation
 
@@ -22,6 +30,8 @@ You can install the package via composer:
 ```bash
 composer require morningtrain/nets-easy
 ```
+
+### For Laravel
 
 You can publish and run the migrations with:
 
@@ -40,21 +50,168 @@ This is the contents of the published config file:
 
 ```php
 return [
+    'auth-key' => env('NETS_EASY_AUTH_KEY'),
+    'events' => [
+        'payment.cancel.created' => \Morningtrain\NETSEasy\Events\PaymentCancelCreated::class,
+        'payment.cancel.failed' => \Morningtrain\NETSEasy\Events\PaymentCancelFailed::class,
+        'payment.charge.created.v2' => \Morningtrain\NETSEasy\Events\PaymentChargeCreatedV2::class,
+        'payment.charge.failed' => \Morningtrain\NETSEasy\Events\PaymentChargeFailed::class,
+        'payment.checkout.completed' => \Morningtrain\NETSEasy\Events\PaymentCheckoutCompleted::class,
+        'payment.created' => \Morningtrain\NETSEasy\Events\PaymentCreated::class,
+        'payment.refund.completed' => \Morningtrain\NETSEasy\Events\PaymentRefundCompleted::class,
+        'payment.refund.failed' => \Morningtrain\NETSEasy\Events\PaymentRefundFailed::class,
+        'payment.refund.initiated.v2' => \Morningtrain\NETSEasy\Events\PaymentRefundInitiatedV2::class,
+        'payment.reservation.created.v2' => \Morningtrain\NETSEasy\Events\PaymentReservationCreatedV2::class,
+        'payment.reservation.failed' => \Morningtrain\NETSEasy\Events\PaymentReservationFailed::class,
+    ],
+    'in_test_mode' => env('NETS_EASY_IN_TEST_MODE', true),
+    'secret_key' => env('NETS_EASY_SECRET_KEY'),
 ];
-```
 
-Optionally, you can publish the views using
-
-```bash
-php artisan vendor:publish --tag="nets-easy-views"
 ```
 
 ## Usage
 
-```php
-$nETSEasy = new Morningtrain\NETSEasy();
-echo $nETSEasy->echoPhrase('Hello, Morningtrain!');
+### Setup your .env file
+
+```dotenv
+NETS_EASY_AUTH_KEY={random_string}
+NETS_EASY_IN_TEST_MODE={true|false}
+NETS_EASY_SECRET_KEY={SECRET_KEY}
 ```
+
+### Running migrations
+#### For Laravel
+
+```bash
+php wp artisan migrate
+```
+#### For Laravel
+
+```bash
+php artisan migrate
+```
+
+### Create payment
+
+```php
+// Create payment and set payment information and urls
+$netsEasyPayment = \Morningtrain\NETSEasy\NETSEasy::makeNetsEasyPaymentFromPaymentDTO(
+    new \Morningtrain\NETSEasy\DTOs\Payment(
+        reference: $order->id,
+        items: [
+            new \Morningtrain\NETSEasy\DTOs\Item(
+                reference: $orderItem->sku,
+                name: $orderItem->name,
+                unitPrice: $orderItem->price,
+                unit: 'pcs',
+                quantity: $orderItem->quantity,
+                taxRate: $orderItem->tax_rate,
+                taxIncluded: true,
+            ),
+        ],
+        currency: 'DKK',
+        termsUrl: 'https://example.com/terms',
+        returnUrl: 'https://example.com/success?token=' . $order->token,
+        cancelUrl: 'https://example.com/cancel',
+        customer: new \Morningtrain\NETSEasy\DTOs\Customer(
+            reference: $customer->id, 
+            email: $customer->email,
+            firstName: $customer->first_name,
+            lastName: $customer->last_name,
+            phoneNumber: 12345678,
+            phoneCountryPrefix: 45,
+            billingAddress: new \Morningtrain\NETSEasy\DTOs\Address(
+                addressLine1: $customer->address1,
+                addressLine2: $customer->address2,
+                postalCode: $customer->zip_code,
+                city: $order->city,
+                country: CountryCode::tryFromName('DK')?->value,
+            ),
+        ),
+        autoCharge: true
+    )
+);
+
+try {
+    $response = $netsEasyPayment->create();
+} catch (ConnectionException $e) {
+    return new \WP_REST_Response(['errors' => [__('Fejl ved oprettelse af ordre.', 'great-northern')]], 406);
+}
+
+if ($response->getStatusCode() !== 201) {
+    wp_redirect($checkoutUrl);
+    exit();
+}
+
+// Save payment id for later use
+// $netsEasyPayment->getPaymentId()
+
+// Redirect to payment page
+wp_redirect($response->getPaymentPageUrl());
+exit();
+```
+
+### Handle existing payment
+
+#### Get Payment
+
+```php
+$netsEasyPayment = \Morningtrain\NETSEasy\NETSEasy::makeNetsEasyPaymentFromPaymentId($paymentId);
+```
+
+#### Create payment
+
+```php
+$netsEasyPayment->create();
+```
+
+#### Terminate payment
+To terminate payment, the customer must not have finished checkout. You can use it on the cancel callback to avoid double payments later.
+
+```php
+$netsEasyPayment->terminate();
+```
+
+#### Cancel payment
+
+```php
+$netsEasyPayment->cancel();
+```
+
+#### Charge payment
+
+```php
+$netsEasyPayment->charge();
+```
+
+### Handle webhooks
+The implementation handle webhooks and sets the payment status automatically.
+
+If you need to do something on a specific webhook, you can do that throug actions and filters.
+
+#### List of implemented webhooks
+
+| Name                        | Descritpion                                                     |
+|-----------------------------|-----------------------------------------------------------------|
+| payment.created             | A payment has been created.                                     |
+| payment.reservation.created | The amount of the payment has been reserved.                    |
+| payment.reservation.failed  | A reservation attempt has failed.                               |
+| payment.checkout.completed  | The customer has completed the checkout.                        |
+| payment.charge.created.v2   | The customer has successfully been charged, partially or fully. |
+| payment.charge.failed       | A charge attempt has failed.                                    |
+| payment.refund.initiated.v2 | A refund has been initiated.                                    |
+| payment.refund.failed       | A refund attempt has failed.                                    |
+| payment.refund.completed    | A refund has successfully been completed.                       |
+| payment.cancel.created      | A reservation has been canceled.                                |
+| payment.cancel.failed       | A cancellation has failed.                                      |
+
+#### Actions
+
+| Hook Name                                     | Description                                      |
+|-----------------------------------------------|--------------------------------------------------|
+| morningtrain/nets-easy/webhook/{$webhookName} | Do something when the webhook is being processed |
+
 
 ## Testing
 
@@ -62,21 +219,9 @@ echo $nETSEasy->echoPhrase('Hello, Morningtrain!');
 composer test
 ```
 
-## Changelog
-
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
-
-## Contributing
-
-Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
-
-## Security Vulnerabilities
-
-Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
-
 ## Credits
 
-- [Matb](https://github.com/Morningtrain)
+- [Mathias B](https://github.com/matbaek)
 - [All Contributors](../../contributors)
 
 ## License
