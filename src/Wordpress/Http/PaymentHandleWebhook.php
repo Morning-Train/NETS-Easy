@@ -7,6 +7,10 @@ use Morningtrain\NETSEasy\Model\PaymentReference;
 
 class PaymentHandleWebhook implements \Morningtrain\NETSEasy\Contracts\PaymentHandleWebhook
 {
+    public function __construct()
+    {
+    }
+
     public function url(string $event = '{event}'): string
     {
         return \rest_url("morningtrain/nets-easy/v1/webhook/{$event}");
@@ -64,15 +68,19 @@ class PaymentHandleWebhook implements \Morningtrain\NETSEasy\Contracts\PaymentHa
         app(NetsEasyPaymentStatus::class)->handleStatus($webhookName, $paymentReference);
 
         $paymentReferenceWebhookIds[] = $webhookId;
-
         $paymentReference->webhook_ids = $paymentReferenceWebhookIds;
-        $paymentReference->save();
 
         // TODO: Dispatch the event, when \Illuminate\Foundation\Events\Dispatchable is available in Medley
-        //        PaymentEventDispatcher::dispatch($webhookName, $paymentReference, $data);
+        // PaymentEventDispatcher::dispatch($webhookName, $paymentReference, $data);
 
-        \do_action("morningtrain/nets-easy/webhook/{$webhookName}", $paymentReference, $data);
-        \do_action('morningtrain/nets-easy/webhook', $paymentReference, $data, $webhookName);
+        try {
+            \do_action("morningtrain/nets-easy/webhook/{$webhookName}", $paymentReference, $data);
+            \do_action('morningtrain/nets-easy/webhook', $paymentReference, $data, $webhookName);
+        } catch (\Exception $exception) {
+            return new \WP_Error($exception->getCode(), $exception->getMessage());
+        }
+
+        $paymentReference->save();
 
         return new \WP_REST_Response;
     }

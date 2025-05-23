@@ -8,7 +8,7 @@ use Morningtrain\NETSEasy\Exceptions\PaymentNotFoundException;
 
 class NETSEasy
 {
-    public static function makePaymentFromPaymentDTO(Payment $paymentDTO): NetsEasyPayment
+    public static function makeNetsEasyPaymentFromPaymentDTO(Payment $paymentDTO): NetsEasyPayment
     {
         return NetsEasyPayment::new()
             ->setPaymentDTO($paymentDTO);
@@ -17,7 +17,7 @@ class NETSEasy
     /**
      * @throws PaymentNotFoundException
      */
-    public static function makePaymentFromPaymentId(string $paymentId): ?NetsEasyPayment
+    public static function makeNetsEasyPaymentFromPaymentId(string $paymentId): ?NetsEasyPayment
     {
         return NetsEasyPayment::new()
             ->setPaymentId($paymentId);

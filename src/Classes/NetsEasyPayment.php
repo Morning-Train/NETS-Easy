@@ -28,7 +28,7 @@ class NetsEasyPayment
         return app(NetsEasyPayment::class);
     }
 
-    public function getPaymentId(): ?int
+    public function getPaymentId(): ?string
     {
         return $this->paymentId;
     }
@@ -42,7 +42,11 @@ class NetsEasyPayment
         }
 
         if (! empty($language)) {
-            $url = add_query_arg('language', $language, $url);
+            if (str_contains($url, '?')) {
+                $url .= '&language=' . $language;
+            } else {
+                $url .= '?language=' . $language;
+            }
         }
 
         return $url;
@@ -76,11 +80,11 @@ class NetsEasyPayment
      */
     public function create(): Response
     {
-        $request = $this->netsEasyClient
+        $response = $this->netsEasyClient
             ->post('v1/payments', $this->paymentDTO);
 
-        if ($request->status() === 201) {
-            $body = json_decode($request->body());
+        if ($response->status() === 201) {
+            $body = json_decode($response->body());
 
             PaymentReference::query()
                 ->updateOrCreate(
@@ -94,7 +98,7 @@ class NetsEasyPayment
             $this->fetchDataFromPaymentId();
         }
 
-        return $request;
+        return $response;
     }
 
     /**
@@ -107,16 +111,16 @@ class NetsEasyPayment
             throw new \Exception('Payment id not found');
         }
 
-        $request = $this->netsEasyClient
+        $response = $this->netsEasyClient
             ->put("v1/payments/{$this->paymentId}/terminate");
 
-        if ($request->status() === 204) {
+        if ($response->status() === 204) {
             $this->updatePaymentStatus(PaymentStatus::TERMINATED->value);
 
             $this->fetchDataFromPaymentId();
         }
 
-        return $request;
+        return $response;
     }
 
     /**
@@ -129,18 +133,22 @@ class NetsEasyPayment
             throw new \Exception('Payment id not found');
         }
 
-        $request = $this->netsEasyClient
+        $response = $this->netsEasyClient
             ->post("v1/payments/{$this->paymentId}/cancels");
 
-        if ($request->status() === 204) {
+        if ($response->status() === 204) {
             $this->updatePaymentStatus(PaymentStatus::CANCEL_CREATED->value);
 
             $this->fetchDataFromPaymentId();
         }
 
-        return $request;
+        return $response;
     }
 
+    /**
+     * @throws ConnectionException
+     * @throws \Exception
+     */
     public function charge(): Response
     {
         if (empty($this->paymentId)) {
@@ -153,7 +161,7 @@ class NetsEasyPayment
             $amount = $this->paymentDTO['order']['amount'] ?? 0;
         }
 
-        $request = $this->netsEasyClient
+        $response = $this->netsEasyClient
             ->post(
                 "v1/payments/{$this->paymentId}/charges",
                 [
@@ -161,13 +169,13 @@ class NetsEasyPayment
                 ]
             );
 
-        if ($request->status() === 201) {
+        if ($response->status() === 201) {
             $this->updatePaymentStatus(PaymentStatus::CHARGE_CREATED->value);
 
             $this->fetchDataFromPaymentId();
         }
 
-        return $request;
+        return $response;
     }
 
     public function getPaymentInfoFromPaymentId(): ?array
@@ -177,14 +185,14 @@ class NetsEasyPayment
         }
 
         try {
-            $request = $this->netsEasyClient
+            $response = $this->netsEasyClient
                 ->get('v1/payments/'.$this->paymentId);
         } catch (ConnectionException $e) {
             return null;
         }
 
-        if ($request->status() === 200) {
-            return json_decode($request->body(), true)['payment'] ?? [];
+        if ($response->status() === 200) {
+            return json_decode($response->body(), true)['payment'] ?? [];
         }
 
         return null;

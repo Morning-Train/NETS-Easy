@@ -20,28 +20,6 @@ readonly class Payment implements \JsonSerializable
         protected bool $autoCharge = false,
     ) {}
 
-    public static function new(
-        string $reference,
-        array $items,
-        string $currency,
-        ?string $termsUrl = null,
-        ?string $returnUrl = null,
-        ?string $cancelUrl = null,
-        ?Customer $customer = null,
-        bool $autoCharge = false,
-    ): self {
-        return new static(
-            reference: $reference,
-            items: $items,
-            currency: $currency,
-            termsUrl: $termsUrl,
-            returnUrl: $returnUrl,
-            cancelUrl: $cancelUrl,
-            customer: $customer,
-            autoCharge: $autoCharge,
-        );
-    }
-
     public function jsonSerialize(): mixed
     {
         $webhooks = [];

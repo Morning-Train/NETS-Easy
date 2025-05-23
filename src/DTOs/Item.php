@@ -14,26 +14,6 @@ readonly class Item implements \JsonSerializable
         protected bool $taxIncluded = false,
     ) {}
 
-    public static function new(
-        string $reference,
-        string $name,
-        int $unitPrice,
-        string $unit,
-        int $quantity = 1,
-        int $taxRate = 0,
-        bool $taxIncluded = false,
-    ): self {
-        return new static(
-            reference: $reference,
-            name: $name,
-            unitPrice: $unitPrice,
-            unit: $unit,
-            quantity: $quantity,
-            taxRate: $taxRate,
-            taxIncluded: $taxIncluded,
-        );
-    }
-
     public function getTaxAmount(): float
     {
         return $this->getNetTotalAmount() * $this->taxRate / 100;

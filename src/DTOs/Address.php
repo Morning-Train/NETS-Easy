@@ -12,22 +12,6 @@ readonly class Address implements \JsonSerializable
         protected ?string $country = null,
     ) {}
 
-    public static function new(
-        ?string $addressLine1 = null,
-        ?string $addressLine2 = null,
-        ?string $postalCode = null,
-        ?string $city = null,
-        ?string $country = null,
-    ): self {
-        return new static(
-            addressLine1: $addressLine1,
-            addressLine2: $addressLine2,
-            postalCode: $postalCode,
-            city: $city,
-            country: $country
-        );
-    }
-
     public function jsonSerialize(): mixed
     {
         return array_filter([

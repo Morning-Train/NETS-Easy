@@ -16,30 +16,6 @@ readonly class Customer implements \JsonSerializable
         protected ?Address $shippingAddress = null,
     ) {}
 
-    public static function new(
-        ?string $reference = null,
-        ?string $email = null,
-        ?string $firstName = null,
-        ?string $lastName = null,
-        ?string $companyName = null,
-        ?string $phoneNumber = null,
-        ?string $phoneCountryPrefix = null,
-        ?Address $billingAddress = null,
-        ?Address $shippingAddress = null,
-    ): self {
-        return new static(
-            reference: $reference,
-            email: $email,
-            firstName: $firstName,
-            lastName: $lastName,
-            companyName: $companyName,
-            phoneNumber: $phoneNumber,
-            phoneCountryPrefix: $phoneCountryPrefix,
-            billingAddress: $billingAddress,
-            shippingAddress: $shippingAddress
-        );
-    }
-
     public function jsonSerialize(): mixed
     {
         $name = $this->getName();
