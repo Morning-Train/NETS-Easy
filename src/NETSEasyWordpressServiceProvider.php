@@ -25,8 +25,13 @@ class NETSEasyWordpressServiceProvider extends NETSEasyServiceProvider
              * ]
              */
             if (
-                ! empty($argv[2]) && $argv[2] == 'artisan' &&
-                ! empty($argv[3]) && Str::contains($argv[3], 'migrate')
+                (
+                    ! empty($argv[1]) && $argv[1] == 'artisan' &&
+                    ! empty($argv[2]) && Str::contains($argv[2], 'migrate')
+                ) || (
+                    ! empty($argv[2]) && $argv[2] == 'artisan' &&
+                    ! empty($argv[3]) && Str::contains($argv[3], 'migrate')
+                )
             ) {
                 $this->package->runsMigrations();
             }
